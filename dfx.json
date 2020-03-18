@@ -1,0 +1,25 @@
+{
+    "canisters": {
+        "greet2": {
+            "main": "src/greet2/main.mo"
+        },
+        "arrNat": {
+            "main": "src/arrNat/main.mo"
+        },
+        "modraw": {
+            "main": "src/modraw/main.mo"
+        }
+    },
+    "defaults": {
+        "build": {
+            "output": "canisters/"
+        },
+        "start": {
+            "address": "127.0.0.1",
+            "port": 8000,
+            "serve_root": "canisters/modraw/assets"
+        }
+    },
+    "dfx": "0.5.3",
+    "version": 1
+}

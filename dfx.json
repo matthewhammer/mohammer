@@ -1,13 +1,19 @@
 {
     "canisters": {
-        "greet2": {
-            "main": "src/greet2/main.mo"
+        "intro": {
+            "main": "src/intro/main.mo"
         },
         "arrNat": {
             "main": "src/arrNat/main.mo"
         },
-        "modraw": {
-            "main": "src/modraw/main.mo"
+        "redBlack": {
+            "main": "src/redBlack/main.mo"
+        },
+        "mazeGame": {
+            "main": "src/mazeGame/main.mo"
+        },
+        "cleanSheets": {
+            "main": "src/cleanSheets/cleanSheets.mo"
         }
     },
     "defaults": {

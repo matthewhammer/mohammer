@@ -12,10 +12,21 @@ actor {
     arrNat := ( #imm([]) : ArrNat );
   };
 
-  public func get() : async [Nat] {
+  public func clearMut() {
+    arrNat := ( #mut([var] : [var Nat]) : ArrNat );
+  };
+
+  public func show() : async [Nat] {
     switch arrNat {
       case (#imm a) a;
-      case (#mut a) { Array.freeze<Nat> a };
+      case (#mut a) Array.freeze<Nat>(a);
+    }
+  };
+
+  public func showFull() : async ({#imm; #mut}, [Nat]) {
+    switch arrNat {
+      case (#imm a) (#imm, a);
+      case (#mut a) (#mut, { Array.freeze<Nat> a });
     }
   };
 

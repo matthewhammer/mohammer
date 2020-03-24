@@ -1,3 +1,3 @@
-# modraw
+# mohammer
 
-Motoko drawing tools and experiments.
+Matthew Hammer's Motoko examples, drawing tools and experiments.

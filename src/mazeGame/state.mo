@@ -11,7 +11,44 @@ module {
   type Tile = Types.Tile;
 
   public func render(st:State) : Render.Elms {
+    let horz = { dir=#right;
+                 interPad=2;
+                 intraPad=1;
+    };
+    let vert = { dir=#down;
+                 interPad=2;
+                 intraPad=1;
+    };
+    let textAtts = {
+      zoom=1;
+      fgFill=#none;
+      bgFill=#none;
+      glyphDim={width=5;height=5};
+      glyphFlow=horz;
+    };
     let r = Render.Render();
+    let room_tiles = st.maze.rooms[st.pos.room].tiles;
+    r.begin(#flow(vert));
+    for (row in room_tiles.vals()) {
+      r.begin(#flow(horz));
+      for (tile in row.vals()) {
+        r.begin(#flow(horz));
+        let ta = textAtts;        
+        switch tile {
+          case (#start) { r.text("s", ta) };
+          case (#goal) { r.text("g", ta) };
+          case (#floor) { r.text("f", ta) };
+          case (#wall) { r.text("W", ta) };
+          case (#lock(_)) { r.text("L", ta) };
+          case (#key(_)) { r.text("k", ta) };
+          case (#inward(_)) { r.text("i", ta) };
+          case (#outward(_)) { r.text("o", ta) };          
+        };
+        r.end();
+      };
+      r.end();
+    };
+    r.end();
     r.getElms()
   };
 
@@ -30,7 +67,16 @@ module {
     getTile(st, movePos(st.pos, dir))
   };
 
+  public func posEq(pos1:Pos, pos2:Pos) : Bool {
+    pos1.room == pos2.room and
+    pos1.tile.0 == pos2.tile.0 and 
+    pos1.tile.1 == pos2.tile.1
+  };
+
   public func move(st:State, dir:Dir2D) : Result.Result<(), ()> {
+    if (posEq(movePos(st.pos, dir), st.pos)) {
+      return #err(())
+    };
     switch (getNeighborTile(st, dir)) {
       case null {
              #err(())
@@ -113,35 +159,35 @@ module {
     let i = #inward(#nat(1));
     let o = #outward(#nat(1));
 
+    let startPos = { room = 0;
+                     tile = (1, 0) };
     { 
       var keys = List.nil<Types.Id>();
       var won = false;
-      var pos = { tile=(0,0); room=0 };
-      var maze : Types.Maze = {
-        start = { room = 0;
-                  tile = (1, 1);
-        };
-        goal = { room = 0;
-                 tile = (6, 6);
-        };
-        rooms = [
-          {
-            width=8;
-            height=8;
-            tiles=[
-              [ w, w, w, w,  w, w, w, w ],
-              [ w, s, k, w,  f, l, g, w ],
-              [ w, l, w, w,  f, l, l, w ],
-              [ w, f, w, f,  w, f, f, w ],
-              
-              [ w, f, f, f,  l, f, f, w ],
-              [ w, f, w, w,  w, w, f, w ],
-              [ w, f, k, w,  k, f, f, w ],
-              [ w, w, w, w,  w, w, w, w ],            
-            ]
-          }                 
-        ];
-      }
+      var pos = startPos;
+      var maze : Types.Maze = 
+        {
+          start = startPos;
+          goal = { room = 0;
+                   tile = (6, 6); };
+          rooms = [
+            {
+              width=8;
+              height=8;
+              tiles=[
+                [ w, s, w, w,  w, w, w, w ],
+                [ w, f, k, w,  f, l, g, w ],
+                [ w, l, w, w,  f, l, l, w ],
+                [ w, f, w, f,  w, f, f, w ],
+                
+                [ w, f, f, f,  l, f, f, w ],
+                [ w, f, w, w,  w, w, f, w ],
+                [ w, f, k, w,  k, f, f, w ],
+                [ w, w, w, w,  w, w, w, w ],            
+              ]
+            }                 
+          ];
+        }
     }
   };
 }

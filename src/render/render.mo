@@ -1,5 +1,6 @@
 // 2D rendering abstractions
 import Buf "mo:stdlib/buf";
+import Debug "mo:stdlib/debug";
 import List "mo:stdlib/list";
 import P "mo:stdlib/prelude";
 
@@ -7,7 +8,7 @@ import Stack "../common/stack";
 
 module {
 
-  public type Color = (Nat8, Nat8, Nat8);
+  public type Color = (Nat, Nat, Nat);
   
   public type Dim = { width: Nat;
                       height: Nat };
@@ -47,6 +48,51 @@ module {
   };  
 
   public type Dir2D = {#up; #down; #left; #right};
+
+  // - - - - - - - - - - - - - - 
+  public func checkApartRects(rect1:Rect, rect2:Rect) : Bool {
+    // case 1: use a vertical division to prove apartness:
+    // 1a: (rect1.x + width) < (rect2.x)
+    // 1b: (rect2.x + width) < (rect1.x)
+    if (rect1.pos.x + rect1.dim.width < rect2.pos.x) { return true };
+    if (rect2.pos.x + rect2.dim.width < rect1.pos.x) { return true };
+    // case 2: use a horizontal division to prove apartness:
+    // 1a: (rect1.y + height) < (rect2.x)
+    // 1b: (rect2.y + height) < (rect1.x)
+    if (rect1.pos.y + rect1.dim.height < rect2.pos.y) { return true };
+    if (rect2.pos.y + rect2.dim.height < rect1.pos.y) { return true };
+    // otherwise, they overlap in at least one unit square, perhaps more.
+    // we do not construct the intersection here (yet).
+    Debug.print( debug_show rect1 );
+    Debug.print( debug_show rect2 );
+    false
+  };
+
+  public func checkElmsApart(elm1:Elm, elm2:Elm) : Bool {
+    let rect1 = boundingRectOfElm(elm1);
+    let rect2 = boundingRectOfElm(elm2);
+    checkApartRects(rect1, rect2)
+  };
+  
+  public func checkElmValid(elm:Elm) : Bool {
+    switch elm {
+      case (#node(n)) { checkElmsValid(n.elms) };
+      case (#text(t, ta)) { true };
+      case (#rect(r, f)) { true };
+    }
+  };
+  
+  public func checkElmsValid(elms:Elms) : Bool {
+    for (elm in elms.vals()) {
+      if (not checkElmValid(elm)) { return false };
+      for (elm2 in elms.vals()) {
+        if (not checkElmsApart(elm, elm2)) {
+          return false 
+        };
+      };               
+    };
+    true
+  };
 
   // - - - - - - - - - - - - - - 
   
@@ -113,17 +159,21 @@ module {
       switch (stack.pop()) {
       case null { P.unreachable() };
       case (?frame_1) {
-             let frame_2 = frame;
+             let frameElm = elmOfFrame(frame);
+             if (not checkElmValid(frameElm)) {
+               Debug.print( "ERROR: not valid: " # (debug_show frameElm) );
+             };
              frame := frame_1;
-             let elm = elmOfFrame(frame_2);
-             frame.elms.add(elm)
+             frame.elms.add(frameElm)
            };
       }
     };
 
     public func getElms() : Elms {
       assert(stack.isEmpty());
-      frame.elms.toArray()
+      let elms = frame.elms.toArray();
+      assert(checkElmsValid(elms));
+      elms
     }
   };
 
@@ -145,25 +195,91 @@ module {
     let dim = dimOfFlow(rs.toArray(), ta.glyphFlow);
     dim                              
   };
+  
+  func dim(w:Nat, h:Nat) : Dim {
+    { width=w; height=h }
+  };
 
   func dimOfFlow(elms:Elms, flow:FlowAtts) : Dim {
-    // todo
-    {width=0; height=0}
+    var width = 0;
+    var height = 0;
+    let intraPadSum =
+      flow.interPad * 2 + 
+      (if (elms.len() == 0) 0 else 
+    (elms.len() - 1) * flow.intraPad)
+    ;
+    switch (flow.dir) {
+      case (#left or #right) {
+             for (elm in elms.vals()) {
+               let dim = dimOfElm(elm);
+               width += dim.width;
+               if (height < dim.height) {
+                 height := dim.height;
+               };
+             };
+             width += intraPadSum;
+             height += 2 * flow.interPad;
+           };
+      case (#up or #down) {
+             for (elm in elms.vals()) {
+               let dim = dimOfElm(elm);
+               height += dim.height;
+               if (width < dim.width) {
+                 width := dim.width;
+               };               
+             };
+             width += 2 * flow.interPad;
+             height += intraPadSum;
+           };
+    };
+    dim(width, height)
   };
 
   func dimOfFrame(frame:Frame) : Dim {
-    // todo
+    let dim = switch (frame.typ) {
+    case (#none) {
+           let rect = boundingRectOfElms(frame.elms.toArray());
+           { width=rect.pos.x + rect.dim.width;
+             height=rect.pos.y + rect.dim.height }
+         };
+    case (#flow(flow)) { dimOfFlow(frame.elms.toArray(), flow) };
+    };
     {width=0; height=0}
   };
 
   func boundingRectOfElm(elm:Elm) : Rect {
-    // todo
-    {pos={x=0; y=0}; dim={width=0; height=0}}
+    switch elm {
+      case (#text(_,_)) { /* to do */ {pos={x=0;y=0};dim={width=0;height=0}}};
+      case (#node(node)) { node.rect };
+      case (#rect(r, _)) { r };
+    }
   };
 
   func boundingRectOfElms(elms:Elms) : Rect {
-    // todo
-    {pos={x=0; y=0}; dim={width=0; height=0}}
+    let max_dim = 999999; // to do
+    var min_x = max_dim;
+    var min_y = max_dim;
+    var max_width = 0;
+    var max_height = 0;
+    for (elm in elms.vals()) {
+      let rect = boundingRectOfElm(elm);
+      if (rect.pos.x < min_x) { min_x := rect.pos.x };
+      if (rect.pos.y < min_y) { min_y := rect.pos.y };
+      let w2 = rect.pos.x + rect.dim.width;
+      let h2 = rect.pos.y + rect.dim.height;
+      if (w2 > max_width) { max_width := w2 };
+      if (h2 > max_height) { max_height := h2 };
+    };
+    { 
+      pos={
+        x=min_x;
+        y=min_y;
+      };
+      dim={
+        width=max_width;
+        height=max_height;
+      }
+    }
   };
 
   func repositionRect(r:Rect, _pos:Pos) : Rect {
@@ -231,7 +347,7 @@ module {
            }
            };
     };
-    ( elmsOut.toArray(), {pos=posOut; dim=frameDim} )
+    ( elmsOut.toArray(), {pos={x=0;y=0}; dim=frameDim} )
   };
 
   func elmOfFrame(frame:Frame) : Elm {

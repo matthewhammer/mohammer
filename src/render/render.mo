@@ -3,34 +3,35 @@ import Buf "mo:stdlib/buf";
 import Debug "mo:stdlib/debug";
 import List "mo:stdlib/list";
 import P "mo:stdlib/prelude";
+import I "mo:stdlib/iter";
 
 import Stack "../common/stack";
 
 module {
 
   public type Color = (Nat, Nat, Nat);
-  
+
   public type Dim = { width: Nat;
                       height: Nat };
-  
+
   public type Pos = { x:Nat;
                       y:Nat };
-  
-  public type Rect = { pos:Pos; 
+
+  public type Rect = { pos:Pos;
                        dim:Dim };
-  
-  public type Node = { rect: Rect; 
-                       fill: Fill; 
+
+  public type Node = { rect: Rect;
+                       fill: Fill;
                        elms: Elms };
-  
+
   public type Elm = { #rect: (Rect, Fill);
                       #text: (Text, TextAtts);
                       #node: Node };
-  
+
   public type Fill = {#open: (Color, Nat);
                       #closed: Color;
                       #none};
-  
+
   public type Elms = [Elm];
 
   public type TextAtts = {
@@ -40,16 +41,16 @@ module {
     glyphDim: Dim;
     glyphFlow: FlowAtts;
   };
-  
+
   public type FlowAtts = {
     dir: Dir2D;
     intraPad: Nat;
     interPad: Nat;
-  };  
+  };
 
   public type Dir2D = {#up; #down; #left; #right};
 
-  // - - - - - - - - - - - - - - 
+  // - - - - - - - - - - - - - -
   public func checkApartRects(rect1:Rect, rect2:Rect) : Bool {
     // case 1: use a vertical division to prove apartness:
     // 1a: (rect1.x + width) < (rect2.x)
@@ -73,29 +74,70 @@ module {
     let rect2 = boundingRectOfElm(elm2);
     checkApartRects(rect1, rect2)
   };
-  
+
   public func checkElmValid(elm:Elm) : Bool {
     switch elm {
-      case (#node(n)) { checkElmsValid(n.elms) };
-      case (#text(t, ta)) { true };
-      case (#rect(r, f)) { true };
+    case (#node(n)) { checkNodeValid(n) };
+    case (#text(t, ta)) { true };
+    case (#rect(r, f)) { true };
     }
   };
-  
+
+  public func rectEq(rect1:Rect, rect2:Rect) : Bool {
+    rect1.pos.x == rect2.pos.x
+    and
+    rect1.pos.y == rect2.pos.y
+    and
+    rect1.dim.width == rect2.dim.width
+    and
+    rect1.dim.height == rect2.dim.height
+  };
+
+  public func rectContains(rect1:Rect, rect2:Rect) : Bool {
+    rect1.pos.x <= rect2.pos.x
+    and
+    rect1.pos.y <= rect2.pos.y
+    and
+    rect1.pos.x + rect1.dim.width >= rect2.pos.x + rect2.dim.width
+    and
+    rect1.pos.y + rect1.dim.height >= rect2.pos.y + rect2.dim.height
+  };
+
+  public func checkNodeValid(node:Node) : Bool {
+    let rect = boundingRectOfElms(node.elms);
+    if (rectContains(node.rect, rect)) {
+      true
+    } else {
+      Debug.print( "Internal error: checkNodeValid failed: Node rect does not contain elms' rect:" );
+      Debug.print( debug_show node.rect );
+      Debug.print( debug_show rect );
+      false
+    }
+  };
+
   public func checkElmsValid(elms:Elms) : Bool {
-    for (elm in elms.vals()) {
-      if (not checkElmValid(elm)) { return false };
-      for (elm2 in elms.vals()) {
-        if (not checkElmsApart(elm, elm2)) {
-          return false 
+    if (elms.len() == 0) {
+      return true
+    };
+    for (i in I.range(0, elms.len() - 1)) {
+      let elm = elms[i];
+      if (not checkElmValid(elm)) {
+        return false
+      };
+      if (i + 1 < elms.len() - 1) {
+        for (j in I.range(i + 1, elms.len() - 1)) {
+          let elm2 = elms[j];
+          if (not checkElmsApart(elm, elm2)) {
+            return false
+          };
         };
-      };               
+      };
     };
     true
   };
 
-  // - - - - - - - - - - - - - - 
-  
+  // - - - - - - - - - - - - - -
+
   public func rect(x_:Nat, y_:Nat, width_:Nat, height_:Nat) : Rect {
     {
       pos= { x = x_;
@@ -118,15 +160,15 @@ module {
 
   // composable operations
   public class Render() {
-    
+
     var frame = {
       var fill=(#none : Fill);
       typ=#none;
       elms=Buf.Buf<Elm>(0);
     } : Frame;
-    
+
     var stack = Stack.Stack<Frame>();
-    
+
     public func begin(typ_:FrameType) {
       let new_frame : Frame = {
         var fill=(#none : Fill);
@@ -146,7 +188,7 @@ module {
         frame.elms.add(e)
       }
     };
-    
+
     public func rect(r:Rect, f:Fill) {
       frame.elms.add(#rect(r, f))
     };
@@ -160,8 +202,8 @@ module {
       case null { P.unreachable() };
       case (?frame_1) {
              let frameElm = elmOfFrame(frame);
-             if (not checkElmValid(frameElm)) {
-               Debug.print( "ERROR: not valid: " # (debug_show frameElm) );
+             if (not (checkElmValid(frameElm))) {
+               Debug.print( "ERROR: frame not valid" );
              };
              frame := frame_1;
              frame.elms.add(frameElm)
@@ -193,9 +235,9 @@ module {
       rs.add(rr)
     };
     let dim = dimOfFlow(rs.toArray(), ta.glyphFlow);
-    dim                              
+    dim
   };
-  
+
   func dim(w:Nat, h:Nat) : Dim {
     { width=w; height=h }
   };
@@ -204,8 +246,8 @@ module {
     var width = 0;
     var height = 0;
     let intraPadSum =
-      flow.interPad * 2 + 
-      (if (elms.len() == 0) 0 else 
+      flow.interPad * 2 +
+      (if (elms.len() == 0) 0 else
     (elms.len() - 1) * flow.intraPad)
     ;
     switch (flow.dir) {
@@ -226,7 +268,7 @@ module {
                height += dim.height;
                if (width < dim.width) {
                  width := dim.width;
-               };               
+               };
              };
              width += 2 * flow.interPad;
              height += intraPadSum;
@@ -244,7 +286,6 @@ module {
          };
     case (#flow(flow)) { dimOfFlow(frame.elms.toArray(), flow) };
     };
-    {width=0; height=0}
   };
 
   func boundingRectOfElm(elm:Elm) : Rect {
@@ -270,7 +311,7 @@ module {
       if (w2 > max_width) { max_width := w2 };
       if (h2 > max_height) { max_height := h2 };
     };
-    { 
+    {
       pos={
         x=min_x;
         y=min_y;
@@ -288,11 +329,11 @@ module {
 
   func repositionElm(elm:Elm, pos:Pos) : Elm {
     switch elm {
-      case (#rect(r, f)) { 
+      case (#rect(r, f)) {
              #rect(repositionRect(r, pos), f)
            };
       case (#node(n)) {
-             #node{ 
+             #node{
                rect= repositionRect(n.rect, pos);
                fill= n.fill;
                elms= n.elms;
@@ -327,21 +368,21 @@ module {
                let dim = dimOfElm(elm);
                let p = flow.intraPad;
                nextPos := switch (flow.dir) {
-               case (#right) { 
+               case (#right) {
                       {x=nextPos.x + dim.width + p;
-                       y=nextPos.y } 
-                    };                 
-               case (#down) { 
-                      {x=nextPos.x;
-                       y=nextPos.y + dim.height + p} 
+                       y=nextPos.y }
                     };
-               case (#left) { 
+               case (#down) {
+                      {x=nextPos.x;
+                       y=nextPos.y + dim.height + p}
+                    };
+               case (#left) {
                       {x=nextPos.x - (dim.width + p);
-                       y=nextPos.y;} 
+                       y=nextPos.y;}
                     };
-               case (#up) { 
+               case (#up) {
                       {x=nextPos.x;
-                       y=nextPos.y - (dim.height + p)} 
+                       y=nextPos.y - (dim.height + p)}
                     };
                }
            }
@@ -357,5 +398,5 @@ module {
            elms= elms_;
     }
   };
-  
+
 }

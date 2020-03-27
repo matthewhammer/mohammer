@@ -34,6 +34,11 @@ module {
 
   public type Elms = [Elm];
 
+  public type Out = {
+    #draw:Elm;
+    #redraw:[(Text, Elm)];
+  };
+  
   public type TextAtts = {
     zoom: Nat;
     fgFill: Fill;
@@ -189,6 +194,10 @@ module {
       }
     };
 
+    public func elm(e:Elm) {
+      frame.elms.add(e)
+    };
+
     public func rect(r:Rect, f:Fill) {
       frame.elms.add(#rect(r, f))
     };
@@ -216,7 +225,14 @@ module {
       let elms = frame.elms.toArray();
       assert(checkElmsValid(elms));
       elms
-    }
+    };
+
+    public func getElm() : Elm {
+      let elms = getElms();
+      assert(elms.len() == 1);
+      elms[0]
+    };
+
   };
 
   func dimOfElm(elm:Elm) : Dim {

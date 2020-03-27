@@ -9,60 +9,39 @@ actor {
 
   public func reset() { n := 0 };
 
-  public func getCount() : async Nat { n };
+  public func get() : async Nat { n };
   
-  public func incCount() : async Nat { n += 1; n };
+  public func inc() : async Nat { n += 1; n };
 
-  public func getText(t:Text) : async Text {
-    "hello " # t # "!"
-  };
+  public func double() : async Nat { n *= 2; n };
 
+  public func drawCount() : async Result.Result<Render.Out, Render.Out> {
 
-  func textAtts() : Render.TextAtts = {
-    let horz = { dir=#right;
-                 interPad=2;
-                 intraPad=1;
-    };
-    {
-      zoom=1;
-      fgFill=#none;
-      bgFill=#none;
-      glyphDim={width=5;height=5};
-      glyphFlow=horz;
-    }
-  };
-  
-  public func drawText(t:Text) : async Result.Result<Render.Elms, Render.Elms> {    
-    #ok([#text("Hello, " # t # "!", textAtts())])
-  };
-
-  public func drawCount() : async Result.Result<Render.Elms, Render.Elms> {
-    
-    let rect : Render.Rect = {
-      pos={x=0; y=1};
-      dim={width=10;height=11}
+    func getRect(n:Nat) : Render.Rect = {
+      pos={x=0; y=0} : Render.Pos; // position ignored, we are using a flow layout
+      dim={width=10 + n * 2;
+           height=if(n < 10){11 - n} else { 5 }}
     };
     
-    let fill : Render.Fill = #closed((254,200,255));
-
-    func rectOf(n:Nat) : Render.Rect = {
-      pos={x=0; y=1};
-      dim={width=10 + n; 
-           height=if(n < 5){11 - n} else { 5 }}
-    };
-    
-    func fillOf(n:Nat) : Render.Fill = 
-      #closed((254, 
+    func getFill(n:Nat) : Render.Fill = 
+      #closed((254,
                200 * n / 256, 
-               if (n < 5) { 255 - (n * 5) } else { 200 }));
+               if (n < 10) { 255 - (n * 5) } else { 200 }));
     
-    func elmOf(n:Nat) : Render.Elm = 
-      #rect(rectOf n, fillOf n);
-
-    #ok(Array.tabulate(n, elmOf))
+    let r = Render.Render();
+    r.begin(#flow{dir=#right;interPad=5;intraPad=5;});
+    if (n > 0) {
+      for (i in I.range(0, n - 1)) {
+        r.rect(getRect i, getFill i)
+      };
+    } else {
+      r.text("0", textAtts())
+    };
+    r.end();
+    #ok(#draw(r.getElm()))
   };
 
-  public func drawGrid() : async Result.Result<Render.Elms, Render.Elms> {
+  public func drawGrid() : async Result.Result<Render.Out, Render.Out> {
     let horz : Render.FrameType = 
       #flow{ dir=#right;
              interPad=5;
@@ -79,8 +58,10 @@ actor {
     let r = Render.Render();
     if (n > 0) {
       r.begin(vert);
+      r.fill(#open((255, 0, 255), 1));
       for (i in I.range(0, n - 1)) {
         r.begin(horz);
+        r.fill(#open((255, 255, 0), 1));
         for (j in I.range(0, n - 1)) {
           r.rect(
             { 
@@ -90,15 +71,27 @@ actor {
               };
               dim={
                 width=10 + i; 
-                height=10 + j + i;
+                height=10 + j + (i * 2);
               }
             },
-            #closed(
-              (255 - i + j / 256,
-               i * j / 256,
-               255 - (i + j) * 10 / 256
-              )
-            )
+            // checkerboard colors:
+            if (i % 2 == 0 and j % 2 == 1 or 
+                i % 2 == 1 and j % 2 == 0)
+             {
+                 #closed(
+                   (255 - i + j / 256,
+                    i * j / 256,
+                    255 - (i + j) * 10 / 256
+                   )
+                 )                 
+             } else {
+                 #closed(
+                   (255 - i * j / 256,                    
+                    255 - (i + j) * 10 / 256,
+                    i * j / 256
+                   )
+                 )
+             }
           );
         };
         r.end();
@@ -108,47 +101,27 @@ actor {
     } else {
       r.text("0", textAtts())
     };
-    #ok(r.getElms())
-  }
+    #ok(#draw(r.getElm()))
+  };
 
-/*
- Rectangle becomes this Candid message (left-hand column gives legend):
+  func textAtts() : Render.TextAtts = {
+    zoom=1;
+    fgFill=#none;
+    bgFill=#none;
+    glyphDim={width=5;height=5};
+    glyphFlow={
+      dir=#right;
+      interPad=2;
+      intraPad=1;
+    }
+  };
+  
+  public func getText(t:Text) : async Text {
+    "hello " # t # "!"
+  };
+      
+  public func drawText(t:Text) : async Result.Result<Render.Out, Render.Out> {    
+    #ok(#draw(#text("Hello, " # t # "!", textAtts())))
+  };
 
- [
-   #ok     Variant(IDLField { id: 24860, 
-           val: Vec([Variant(
-   #rect   IDLField { id: 1269255460, 
-           val: Record([
-   0       IDLField { id: 0, val: 
-           Record([
-   #dim    IDLField { id: 4996424, val: Record([
-   #height IDLField { id: 38537191, val: Nat(11) }, 
-   #width  IDLField { id: 3395466758, val: Nat(10) }]) }, 
-   #pos    IDLField { id: 5594516, val: 
-           Record([
-   #x      IDLField { id: 120, val: Nat(0) }, 
-   #y      IDLField { id: 121, val: Nat(1) }]) }]) }, 
-   1       IDLField { id: 1, val: Variant(
-   #closed IDLField { id: 240232876, val: Record([
-           IDLField { id: 0, val: Nat(254) }, 
-           IDLField { id: 1, val: Nat(200) }, 
-           IDLField { id: 2, val: Nat(255) }]) }) }]) })]) })]"
- */
 }
-
-
-/*
- DRAW GRID
-
-#rect ...460
-#node ...690
-#pos  ...516
-#dim  ...424
-#elms ...421
-
- [Variant(IDLField { id: 24860, val: Vec([
-Variant(IDLField { id: 1225394690, val: Record([IDLField { id: 1125441421, val: Vec([
-Variant(IDLField { id: 1225394690, val: Record([IDLField { id: 1125441421, val: Vec([
-Variant(IDLField { id: 1269255460, val: Record([IDLField { id: 0, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(10) }, IDLField { id: 3395466758, val: Nat(10) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(2) }, IDLField { id: 121, val: Nat(2) }]) }]) }, IDLField { id: 1, val: Variant(IDLField { id: 240232876, val: Record([IDLField { id: 0, val: Nat(0) }, IDLField { id: 1, val: Nat(0) }, IDLField { id: 2, val: Nat(0) }]) }) }]) }), Variant(IDLField { id: 1269255460, val: Record([IDLField { id: 0, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(10) }, IDLField { id: 3395466758, val: Nat(10) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(13) }, IDLField { id: 121, val: Nat(2) }]) }]) }, IDLField { id: 1, val: Variant(IDLField { id: 240232876, val: Record([IDLField { id: 0, val: Nat(0) }, IDLField { id: 1, val: Nat(0) }, IDLField { id: 2, val: Nat(0) }]) }) }]) })]) }, IDLField { id: 1136381571, val: Variant(IDLField { id: 1225396920, val: Null }) }, IDLField { id: 1269255460, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(0) }, IDLField { id: 3395466758, val: Nat(0) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(2) }, IDLField { id: 121, val: Nat(2) }]) }]) }]) }), Variant(IDLField { id: 1225394690, val: Record([IDLField { id: 1125441421, val: Vec([Variant(IDLField { id: 1269255460, val: Record([IDLField { id: 0, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(10) }, IDLField { id: 3395466758, val: Nat(10) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(2) }, IDLField { id: 121, val: Nat(2) }]) }]) }, IDLField { id: 1, val: Variant(IDLField { id: 240232876, val: Record([IDLField { id: 0, val: Nat(1) }, IDLField { id: 1, val: Nat(0) }, IDLField { id: 2, val: Nat(0) }]) }) }]) }), Variant(IDLField { id: 1269255460, val: Record([IDLField { id: 0, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(10) }, IDLField { id: 3395466758, val: Nat(10) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(13) }, IDLField { id: 121, val: Nat(2) }]) }]) }, IDLField { id: 1, val: Variant(IDLField { id: 240232876, val: Record([IDLField { id: 0, val: Nat(1) }, IDLField { id: 1, val: Nat(0) }, IDLField { id: 2, val: Nat(0) }]) }) }]) })]) }, IDLField { id: 1136381571, val: Variant(IDLField { id: 1225396920, val: Null }) }, IDLField { id: 1269255460, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(0) }, IDLField { id: 3395466758, val: Nat(0) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(2) }, IDLField { id: 121, val: Nat(3) }]) }]) }]) })]) }, IDLField { id: 1136381571, val: Variant(IDLField { id: 1225396920, val: Null }) }, IDLField { id: 1269255460, val: Record([IDLField { id: 4996424, val: Record([IDLField { id: 38537191, val: Nat(0) }, IDLField { id: 3395466758, val: Nat(0) }]) }, IDLField { id: 5594516, val: Record([IDLField { id: 120, val: Nat(0) }, IDLField { id: 121, val: Nat(0) }]) }]) }]) })]) })]
-
-*/

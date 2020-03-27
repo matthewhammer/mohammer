@@ -10,14 +10,14 @@ module {
   type Pos = Types.Pos;
   type Tile = Types.Tile;
 
-  public func render(st:State) : Render.Elms {
+  public func render(st:State) : Render.Elm {
     let horz = { dir=#right;
-                 interPad=2;
-                 intraPad=1;
+                 interPad=4;
+                 intraPad=4;
     };
     let vert = { dir=#down;
-                 interPad=2;
-                 intraPad=1;
+                 interPad=0;
+                 intraPad=0;
     };
     let textAtts = {
       zoom=1;
@@ -29,27 +29,36 @@ module {
     let r = Render.Render();
     let room_tiles = st.maze.rooms[st.pos.room].tiles;
     r.begin(#flow(vert));
+    var i = 0;
     for (row in room_tiles.vals()) {
+      var j = 0;
       r.begin(#flow(horz));
       for (tile in row.vals()) {
         r.begin(#flow(horz));
-        let ta = textAtts;        
-        switch tile {
-          case (#start) { r.text("s", ta) };
-          case (#goal) { r.text("g", ta) };
-          case (#floor) { r.text("f", ta) };
-          case (#wall) { r.text("W", ta) };
-          case (#lock(_)) { r.text("L", ta) };
-          case (#key(_)) { r.text("k", ta) };
+        let ta = textAtts;
+        if (j == st.pos.tile.0 
+        and i == st.pos.tile.1) {
+          r.text("☺", ta)
+        } else {
+          switch tile {
+          case (#start) { r.text("◊", ta) };
+          case (#goal) { r.text("⇲", ta) };
+          case (#floor) { r.text(" ", ta) };
+          case (#wall) { r.text("█", ta) };
+          case (#lock(_)) { r.text("ļ", ta) };
+          case (#key(_)) { r.text("ķ", ta) };
           case (#inward(_)) { r.text("i", ta) };
           case (#outward(_)) { r.text("o", ta) };          
+          };
         };
         r.end();
+        j += 1;
       };
       r.end();
+      i += 1;
     };
     r.end();
-    r.getElms()
+    r.getElm()
   };
 
   public func getTile(st:State, pos:Pos) : ?Tile {
@@ -63,8 +72,24 @@ module {
     }
   };
 
+  public func setTile(st:State, pos:Pos, newTile:Tile) : ?Tile {
+    let room = st.maze.rooms[pos.room];
+    // address y pos (row), then x pos (column):
+    if (pos.tile.1 < room.height and pos.tile.0 < room.width) {
+      let oldTile = room.tiles[pos.tile.1][pos.tile.0];
+      room.tiles[pos.tile.1][pos.tile.0] := newTile;
+      ?oldTile
+    } else {
+      null
+    }
+  };
+
   public func getNeighborTile(st:State, dir:Dir2D) : ?Tile {
     getTile(st, movePos(st.pos, dir))
+  };
+
+  public func updateNeighborTile(st:State, dir:Dir2D, tile:Tile) : ?Tile {
+    setTile(st, movePos(st.pos, dir), tile)
   };
 
   public func posEq(pos1:Pos, pos2:Pos) : Bool {
@@ -86,6 +111,7 @@ module {
              #ok(())
            };
       case (?#key(id)) {
+             ignore updateNeighborTile(st, dir, #floor);
              st.pos := movePos(st.pos, dir);
              st.keys := ?(id, st.keys);
              #ok(())
@@ -94,6 +120,7 @@ module {
              switch (st.keys) {
              case null { #err(()) };
              case (?(_key, keys)) { 
+                    ignore updateNeighborTile(st, dir, #floor);
                     // use last key; to do: search for matching keys by Id...
                     st.keys := keys; 
                     st.pos := movePos(st.pos, dir);
@@ -161,6 +188,19 @@ module {
 
     let startPos = { room = 0;
                      tile = (1, 0) };
+
+    // compiler issue?: cannot inline this let binding; why?
+    let _tiles : [[ var Tile ]] = [
+      [ var w, s, w, w,  w, w, w, w ],
+      [ var w, f, k, w,  f, l, g, w ],
+      [ var w, l, w, w,  f, l, l, w ],
+      [ var w, f, w, f,  w, f, f, w ],
+      
+      [ var w, f, f, f,  l, f, f, w ],
+      [ var w, f, w, w,  w, w, f, w ],
+      [ var w, f, k, w,  k, f, f, w ],
+      [ var w, w, w, w,  w, w, w, w ],            
+    ];
     { 
       var keys = List.nil<Types.Id>();
       var won = false;
@@ -174,17 +214,7 @@ module {
             {
               width=8;
               height=8;
-              tiles=[
-                [ w, s, w, w,  w, w, w, w ],
-                [ w, f, k, w,  f, l, g, w ],
-                [ w, l, w, w,  f, l, l, w ],
-                [ w, f, w, f,  w, f, f, w ],
-                
-                [ w, f, f, f,  l, f, f, w ],
-                [ w, f, w, w,  w, w, f, w ],
-                [ w, f, k, w,  k, f, f, w ],
-                [ w, w, w, w,  w, w, w, w ],            
-              ]
+              tiles=_tiles;
             }                 
           ];
         }

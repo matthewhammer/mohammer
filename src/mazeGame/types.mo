@@ -20,7 +20,7 @@ public type Tile = {
 public type Room = {
   width : Nat;
   height : Nat;
-  tiles : [[Tile]];
+  tiles : [[var Tile]];
 };
 
 public type Pos = {
@@ -45,7 +45,7 @@ public type State = {
 };
 
 // move results back to game client:
-public type ResOut = Result.Result<Render.Elms, Render.Elms>;
+public type ResOut = Result.Result<Render.Out, Render.Out>;
 
 // Ids are numbers, strings, and "tagged tuples" made of those primitives:
 // (see also: CleanSheets 'Name' type for sheet-cells)

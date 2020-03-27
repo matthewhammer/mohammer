@@ -11,6 +11,10 @@ module {
   type Tile = Types.Tile;
 
   public func render(st:State) : Render.Elm {
+    let legendPad = { dir=#right;
+                      interPad=20;
+                      intraPad=20;
+    };
     let horz = { dir=#right;
                  interPad=4;
                  intraPad=4;
@@ -26,8 +30,33 @@ module {
       glyphDim={width=5;height=5};
       glyphFlow=horz;
     };
+    let ta = textAtts;
     let r = Render.Render();
     let room_tiles = st.maze.rooms[st.pos.room].tiles;
+    r.begin(#flow(horz));
+    r.begin(#flow(vert));
+    r.fill(#open((255, 255, 255), 1));
+    // padding; fix later
+    r.begin(#flow(vert));
+    r.rect({pos={x=0;y=0};dim={width=150;height=10}},
+           #none);
+    r.text("keys:", ta);
+    r.end();
+    // padding; fix later
+    r.begin(#flow(vert));
+    r.rect({pos={x=0;y=0};dim={width=150;height=10}},
+           #none);
+    switch (st.keys) {
+      case null { r.text("none", ta) };
+      case (?_) {
+             List.iter<Types.Id>(st.keys,
+               func (_:Types.Id) {
+                 r.text("ķ", ta)
+               })
+           };
+    };
+    r.end();
+    r.end();
     r.begin(#flow(vert));
     var i = 0;
     for (row in room_tiles.vals()) {
@@ -35,12 +64,12 @@ module {
       r.begin(#flow(horz));
       for (tile in row.vals()) {
         r.begin(#flow(horz));
-        let ta = textAtts;
         if (j == st.pos.tile.0 
         and i == st.pos.tile.1) {
           r.text("☺", ta)
         } else {
           switch tile {
+          case (#void) { r.text(" ", ta) };
           case (#start) { r.text("◊", ta) };
           case (#goal) { r.text("⇲", ta) };
           case (#floor) { r.text(" ", ta) };
@@ -57,6 +86,7 @@ module {
       r.end();
       i += 1;
     };
+    r.end();
     r.end();
     r.getElm()
   };
@@ -131,6 +161,9 @@ module {
       case (?#wall) {
              #err(())
            };
+      case (?#void) {
+             #err(())
+           };
       case (?#goal) {
              st.won := true;
              st.pos := movePos(st.pos, dir);
@@ -177,6 +210,7 @@ module {
   
   public func initState() : Types.State {
     // tile palette for example maze
+    let x = #void;
     let s = #start;
     let g = #goal;
     let f = #floor;
@@ -191,15 +225,20 @@ module {
 
     // compiler issue?: cannot inline this let binding; why?
     let _tiles : [[ var Tile ]] = [
-      [ var w, s, w, w,  w, w, w, w ],
-      [ var w, f, k, w,  f, l, g, w ],
-      [ var w, l, w, w,  f, l, l, w ],
-      [ var w, f, w, f,  w, f, f, w ],
+      [ var w, s, w, x,  x, x, x, x,  w, w, w, w ],
+      [ var w, k, w, x,  x, x, w, x,  w, l, l, g ],
+      [ var w, l, w, x,  x, w, f, w,  w, l, w, w ],
+      [ var w, k, w, x,  x, w, f, f,  f, l, f, w ],
+
+      [ var w, k, w, x,  w, w, l, w,  f, f, f, w ],
+      [ var w, l, w, x,  w, l, f, w,  w, w, f, w ],
+      [ var w, l, w, x,  w, l, l, w,  x, w, f, w ],
+      [ var w, f, w, w,  w, l, f, w,  x, w, f, w ],
       
-      [ var w, f, f, f,  l, f, f, w ],
-      [ var w, f, w, w,  w, w, f, w ],
-      [ var w, f, k, w,  k, f, f, w ],
-      [ var w, w, w, w,  w, w, w, w ],            
+      [ var w, f, f, f,  l, f, f, w,  w, f, f, w ],
+      [ var w, f, w, w,  w, w, f, w,  k, k, f, w ],
+      [ var w, f, k, w,  k, k, f, w,  k, k, f, w ],
+      [ var w, w, w, w,  w, w, w, w,  w, w, w, x ],            
     ];
     { 
       var keys = List.nil<Types.Id>();
@@ -213,7 +252,7 @@ module {
           rooms = [
             {
               width=8;
-              height=8;
+              height=12;
               tiles=_tiles;
             }                 
           ];

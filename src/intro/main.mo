@@ -9,6 +9,8 @@ actor {
 
   public func reset() { n := 0 };
 
+  public func set(n_:Nat) { n := n_ };
+  
   public func get() : async Nat { n };
   
   public func inc() : async Nat { n += 1; n };
@@ -18,14 +20,17 @@ actor {
   public func drawCount() : async Result.Result<Render.Out, Render.Out> {
 
     func getRect(n:Nat) : Render.Rect = {
-      pos={x=0; y=0} : Render.Pos; // position ignored, we are using a flow layout
-      dim={width=10 + n * 2;
-           height=if(n < 10){11 - n} else { 5 }}
+      let fluff = if(n < 10){11 - n} else { 5 };
+      {
+        pos={x=0; y=0} : Render.Pos; // position ignored, we are using a flow layout
+        dim={width=20 - fluff;
+             height=fluff}
+      }
     };
     
     func getFill(n:Nat) : Render.Fill = 
-      #closed((254,
-               200 * n / 256, 
+      #closed((254 * (n % 3) + 1,
+               200 / ((n % 3) + 1),
                if (n < 10) { 255 - (n * 5) } else { 200 }));
     
     let r = Render.Render();

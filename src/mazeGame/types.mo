@@ -5,6 +5,7 @@ import Render "../render/render";
 module {
 
 public type Tile = {
+  #void;
   #start;
   #goal;
   #floor;

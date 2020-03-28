@@ -1,4 +1,4 @@
 # A Motoko Maze Game
 
 
-![Screenshot-20200327](Screenshot-20200327.png)
+![Screenshot](Screenshot-20200328.png)

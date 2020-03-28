@@ -20,12 +20,12 @@ module {
                      intraPad=1;
     };
     let horz = { dir=#right;
-                 interPad=0;
-                 intraPad=0;
+                 interPad=1;
+                 intraPad=1;
     };
     let vert = { dir=#down;
-                 interPad=0;
-                 intraPad=0;
+                 interPad=1;
+                 intraPad=1;
     };
     func tileAtts(fg:Render.Fill, bg:Render.Fill) : Render.TextAtts = {
       {

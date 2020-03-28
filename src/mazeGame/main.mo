@@ -12,6 +12,11 @@ actor {
     resOut(#ok)
   };
   
+  public func reset() : async Types.ResOut {
+    state := State.initState();
+    resOut(#ok)
+  };
+  
   public func move(dir:Types.Dir2D) : async {#ok; #err} {
     switch (State.move(state, dir)) {
       case (#ok(_)) { #ok };
@@ -26,15 +31,26 @@ actor {
     }
   };
 
+  public func moveStarDraw(dir:Types.Dir2D) : async Types.ResOut  {
+    loop {
+      switch (State.move(state, dir)) {
+        case (#ok(_)) { };
+        case (#err(_)) { return resOut(#ok) };
+      }
+    }
+  };
+
   public func move2(dir1:Types.Dir2D, dir2:Types.Dir2D) : async Types.ResOut  {
     _moveN([dir1, dir2])
   };
 
-  public func reset() : async Types.ResOut {
-    state := State.initState();
-    resOut(#ok)
-  };
 
+  func _moveN(dir:[Types.Dir2D]) : Types.ResOut {
+    switch (State.multiMove(state, dir)) {
+      case (#ok(_)) { resOut(#ok) };
+      case (#err(_)) { resOut(#err) };
+    }
+  };
 
   func resOut(status:{#ok; #err}) : Types.ResOut {
     let elm = State.render(state);

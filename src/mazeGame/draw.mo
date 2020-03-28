@@ -59,6 +59,9 @@ module {
   func taLegendText() : Render.TextAtts =
     taLegend(#closed((200, 200, 200)));
 
+  func taTitleText() : Render.TextAtts =
+    taLegend(#closed((255, 200, 255)));
+
   // Fill names --------------------------------------------------------
 
   func bgFill() : Render.Fill = #closed((50, 10, 50));
@@ -78,11 +81,37 @@ module {
     let r = Render.Render();
     let room_tiles = st.maze.rooms[st.pos.room].tiles;
 
-    r.begin(#flow(horz)); // Display begin
+    r.begin(#flow(vert)); // Display begin
+    r.fill(#open((200, 255, 200), 1));
+
+    // Title line:
+    if (st.won) {
+      r.begin(#flow(horz));
+      r.text("MazeGame: Game over, You won!!", taTitleText());
+      r.end();
+    } else {
+      r.begin(#flow(horz));
+      r.text("MazeGame in Motoko!", taTitleText());
+      r.end();
+    };
+
+    r.begin(#flow(horz)); // Inner-display begin
 
     r.begin(#flow(vert)); // Legend begin
+
     r.begin(#flow(vert));
-    //r.rect({pos={x=0;y=0};dim={width=150;height=10}}, #none);
+    r.begin(#flow(horz));
+    r.text("room:", taLegendText());
+    r.end();
+    r.begin(#flow(horz));
+    r.begin(#flow(vert));
+    r.text(debug_show st.pos.room, taLegendText());
+    r.end();
+    r.end();
+
+    r.begin(#flow(horz));
+    r.text("tile:", taLegendText());
+    r.end();
     r.begin(#flow(horz));
     r.begin(#flow(vert));
     r.text("(", taLegendText());
@@ -102,7 +131,6 @@ module {
     r.end();
 
     r.begin(#flow(vert)); // Keys begin
-    //r.rect({pos={x=0;y=0};dim={width=150;height=10}}, #none);
     r.text("keys:", taLegendText());
     r.end();
     r.begin(#flow(horz));
@@ -151,6 +179,7 @@ module {
       i += 1;
     };
     r.end(); // Map end
+    r.end(); // Inner-display end
     r.end(); // Display end
     r.getElm()
   };

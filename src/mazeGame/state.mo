@@ -170,7 +170,7 @@ module {
                    tile = (6, 6); };
           rooms = [
             {
-              width=8;
+              width=12;
               height=12;
               tiles=_tiles;
             }                 

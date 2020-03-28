@@ -55,7 +55,7 @@ actor {
 
   func resOut(status:{#ok; #err}) : Types.ResOut {
     let elm = Draw.drawState(state);
-    let rs : Render.Out = #redraw([("state", elm)]);
+    let rs : Render.Out = #redraw([("screen", elm)]);
     switch status {
       case (#ok) { #ok(rs) };
       case (#err) { #err(rs) };

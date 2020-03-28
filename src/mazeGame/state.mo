@@ -16,21 +16,32 @@ module {
                       intraPad=20;
     };
     let horz = { dir=#right;
-                 interPad=4;
-                 intraPad=4;
+                 interPad=0;
+                 intraPad=0;
     };
     let vert = { dir=#down;
                  interPad=0;
                  intraPad=0;
     };
-    let textAtts = {
-      zoom=1;
-      fgFill=#none;
-      bgFill=#none;
-      glyphDim={width=5;height=5};
-      glyphFlow=horz;
+    func textAtts(fg:Render.Fill, bg:Render.Fill) : Render.TextAtts = {
+      {
+        zoom=2;
+        fgFill=fg;
+        bgFill=bg;
+        glyphDim={width=5;height=5};
+        glyphFlow=horz;
+      }
     };
-    let ta = textAtts;
+    
+    let ta = textAtts(#closed((100, 255, 100)), #closed((0, 0, 0)));
+    let taStart = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
+    let taGoal = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
+    let taWall = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
+    let taFloor = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
+    let taLock = textAtts(#closed((255, 255, 100)), #closed((0, 0, 0)));
+    let taKey = textAtts(#closed((255, 255, 100)), #closed((0, 0, 0)));
+
+    let taVoid = textAtts(#none, #none);
     let r = Render.Render();
     let room_tiles = st.maze.rooms[st.pos.room].tiles;
     r.begin(#flow(horz));
@@ -69,13 +80,13 @@ module {
           r.text("☺", ta)
         } else {
           switch tile {
-          case (#void) { r.text(" ", ta) };
-          case (#start) { r.text("◊", ta) };
-          case (#goal) { r.text("⇲", ta) };
-          case (#floor) { r.text(" ", ta) };
-          case (#wall) { r.text("█", ta) };
-          case (#lock(_)) { r.text("ļ", ta) };
-          case (#key(_)) { r.text("ķ", ta) };
+          case (#void) { r.text(" ", taVoid) };
+          case (#start) { r.text("◊", taStart) };
+          case (#goal) { r.text("⇲", taGoal) };
+          case (#floor) { r.text(" ", taFloor) };
+          case (#wall) { r.text("█", taWall) };
+          case (#lock(_)) { r.text("ļ", taLock) };
+          case (#key(_)) { r.text("ķ", taKey) };
           case (#inward(_)) { r.text("i", ta) };
           case (#outward(_)) { r.text("o", ta) };          
           };

@@ -3,6 +3,7 @@ import Result "mo:stdlib/result";
 import Render "../render/render";
 import Types "types";
 import State "state";
+import Draw "draw";
 
 actor {
 
@@ -53,7 +54,7 @@ actor {
   };
 
   func resOut(status:{#ok; #err}) : Types.ResOut {
-    let elm = State.render(state);
+    let elm = Draw.drawState(state);
     let rs : Render.Out = #redraw([("state", elm)]);
     switch status {
       case (#ok) { #ok(rs) };

@@ -36,24 +36,6 @@ actor {
   };
 
 
-
-  // temp
-  func move3(dir1:Types.Dir2D, dir2:Types.Dir2D, dir3:Types.Dir2D) : async Types.ResOut  {
-    _moveN([dir1, dir2, dir3])
-  };
-
-  // temp
-  func moveN(dirs:[Types.Dir2D]) : async Types.ResOut  {
-    _moveN(dirs)
-  };
-
-  func _moveN(dir:[Types.Dir2D]) : Types.ResOut {
-    switch (State.multiMove(state, dir)) {
-      case (#ok(_)) { resOut(#ok) };
-      case (#err(_)) { resOut(#err) };
-    }
-  };
-
   func resOut(status:{#ok; #err}) : Types.ResOut {
     let elm = State.render(state);
     let rs : Render.Out = #redraw([("state", elm)]);

@@ -244,14 +244,39 @@ module {
   };
 
   func dimOfText(t:Text, ta:TextAtts) : Dim {
-    let r = {pos={x=0;y=0}; dim=ta.glyphDim};
-    let rr = #rect(r, #none);
-    let rs = Buf.Buf<Elm>(0);
-    for (_ in t.chars()) {
-      rs.add(rr)
+    var w = 0;
+    var h = 0;             
+    if (t.len() > 0) {
+      switch (ta.glyphFlow.dir) {
+      case (#right or #left) { 
+             w := ta.glyphFlow.interPad * 2;
+             h := ta.glyphFlow.interPad * 2 + ta.glyphDim.height * ta.zoom;
+           };
+      case (#up or #down) { 
+             w := ta.glyphFlow.interPad * 2 + ta.glyphDim.width * ta.zoom;
+             h := ta.glyphFlow.interPad * 2;
+           };
+      }
     };
-    let dim = dimOfFlow(rs.toArray(), ta.glyphFlow);
-    dim
+    var first = true;
+    for (c in t.chars()) {
+      switch (ta.glyphFlow.dir) {
+      case (#right or #left) { 
+             w += ta.glyphDim.width * ta.zoom; 
+             if (not first) { 
+               w += ta.glyphFlow.intraPad
+             }
+           };
+      case (#down or #up) { 
+             w += ta.glyphDim.height * ta.zoom;
+             if (not first) { 
+               h += ta.glyphFlow.intraPad
+             } 
+           };
+      };
+      first := false
+    };
+    {width=w; height=h}
   };
 
   func dim(w:Nat, h:Nat) : Dim {
@@ -304,9 +329,14 @@ module {
     };
   };
 
+  func boundingRectOfText(t:Text, ta:TextAtts) : Rect {
+    let dim_ = dimOfText(t, ta);
+    {pos={x=0;y=0}; dim=dim_}
+  };
+
   func boundingRectOfElm(elm:Elm) : Rect {
     switch elm {
-      case (#text(_,_)) { /* to do */ {pos={x=0;y=0};dim={width=0;height=0}}};
+      case (#text(t,ta)) { boundingRectOfText(t, ta) };
       case (#node(node)) { node.rect };
       case (#rect(r, _)) { r };
     }

@@ -15,6 +15,10 @@ module {
                       interPad=20;
                       intraPad=20;
     };
+    let textHorz = { dir=#right;
+                     interPad=1;
+                     intraPad=1;
+    };
     let horz = { dir=#right;
                  interPad=0;
                  intraPad=0;
@@ -23,9 +27,9 @@ module {
                  interPad=0;
                  intraPad=0;
     };
-    func textAtts(fg:Render.Fill, bg:Render.Fill) : Render.TextAtts = {
+    func tileAtts(fg:Render.Fill, bg:Render.Fill) : Render.TextAtts = {
       {
-        zoom=2;
+        zoom=4;
         fgFill=fg;
         bgFill=bg;
         glyphDim={width=5;height=5};
@@ -33,42 +37,73 @@ module {
       }
     };
     
-    let ta = textAtts(#closed((100, 255, 100)), #closed((0, 0, 0)));
-    let taStart = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
-    let taGoal = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
-    let taWall = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
-    let taFloor = textAtts(#closed((255, 100, 255)), #closed((0, 0, 0)));
-    let taLock = textAtts(#closed((255, 255, 100)), #closed((0, 0, 0)));
-    let taKey = textAtts(#closed((255, 255, 100)), #closed((0, 0, 0)));
+    func taLegend(fg:Render.Fill) : Render.TextAtts = 
+      {
+        zoom=2;
+        fgFill=fg;
+        bgFill=#closed((0, 0, 0));
+        glyphDim={width=5;height=5};
+        glyphFlow=textHorz;
+      };
+    let taLegendText = taLegend(#closed((200, 200, 200)));
 
-    let taVoid = textAtts(#none, #none);
+    let bgFill = #closed((50, 10, 50));
+    let taVoid = tileAtts(#none, #none);
+    let taPlayer = tileAtts(#closed((255, 255, 255)), bgFill);
+    let taStart = tileAtts(#closed((255, 100, 255)), bgFill);
+    let taGoal = tileAtts(#closed((255, 240, 255)), bgFill);
+    let taWall = tileAtts(#closed((200, 100, 200)), bgFill);
+    let taFloor = tileAtts(#closed((200, 100, 200)), bgFill);
+    let taLock = tileAtts(#closed((200, 200, 100)), bgFill);
+    let taKey = tileAtts(#closed((255, 255, 100)), bgFill);
+
     let r = Render.Render();
     let room_tiles = st.maze.rooms[st.pos.room].tiles;
+    
+    r.begin(#flow(horz)); // Display begin
+
+    r.begin(#flow(vert)); // Legend begin
+    r.begin(#flow(vert));
+    //r.rect({pos={x=0;y=0};dim={width=150;height=10}}, #none);
     r.begin(#flow(horz));
-    r.begin(#flow(vert));
-    r.fill(#open((255, 255, 255), 1));
-    // padding; fix later
-    r.begin(#flow(vert));
-    r.rect({pos={x=0;y=0};dim={width=150;height=10}},
-           #none);
-    r.text("keys:", ta);
+    r.begin(#flow(vert));                 
+    r.text("(", taLegendText);
     r.end();
-    // padding; fix later
+    r.begin(#flow(vert));                 
+    r.text(debug_show st.pos.tile.1, taLegendText);
+    r.end();
+    r.begin(#flow(vert));                 
+    r.text(",", taLegendText);
+    r.end();
+    r.begin(#flow(vert));                 
+    r.text(debug_show st.pos.tile.0, taLegendText);
+    r.end();
     r.begin(#flow(vert));
-    r.rect({pos={x=0;y=0};dim={width=150;height=10}},
-           #none);
+    r.text(")", taLegendText);
+    r.end();
+    r.end();
+
+    r.begin(#flow(vert)); // Keys begin
+    //r.rect({pos={x=0;y=0};dim={width=150;height=10}}, #none);
+    r.text("keys:", taLegendText);
+    r.end();
+    r.begin(#flow(horz));
     switch (st.keys) {
-      case null { r.text("none", ta) };
+      case null { r.text("none", taLegendText) };
       case (?_) {
              List.iter<Types.Id>(st.keys,
                func (_:Types.Id) {
-                 r.text("ķ", ta)
+                 r.begin(#flow(vert));
+                 r.text("ķ", taLegend(#closed((255, 255, 100))));
+                 r.end();
                })
            };
     };
     r.end();
-    r.end();
-    r.begin(#flow(vert));
+    r.end(); // Keys end
+    r.end(); // Legend end
+
+    r.begin(#flow(vert)); // Map begin
     var i = 0;
     for (row in room_tiles.vals()) {
       var j = 0;
@@ -77,7 +112,7 @@ module {
         r.begin(#flow(horz));
         if (j == st.pos.tile.0 
         and i == st.pos.tile.1) {
-          r.text("☺", ta)
+          r.text("☺", taPlayer)
         } else {
           switch tile {
           case (#void) { r.text(" ", taVoid) };
@@ -87,8 +122,8 @@ module {
           case (#wall) { r.text("█", taWall) };
           case (#lock(_)) { r.text("ļ", taLock) };
           case (#key(_)) { r.text("ķ", taKey) };
-          case (#inward(_)) { r.text("i", ta) };
-          case (#outward(_)) { r.text("o", ta) };          
+          case (#inward(_)) { r.text("i", taWall) };
+          case (#outward(_)) { r.text("o", taWall) };          
           };
         };
         r.end();
@@ -97,8 +132,8 @@ module {
       r.end();
       i += 1;
     };
-    r.end();
-    r.end();
+    r.end(); // Map end
+    r.end(); // Display end
     r.getElm()
   };
 

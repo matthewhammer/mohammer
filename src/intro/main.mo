@@ -129,4 +129,10 @@ actor {
     #ok(#draw(#text("Hello, " # t # "!", textAtts())))
   };
 
+  public func test(n:Nat) {
+    for (i in I.range(0, n - 1)) {
+      test(n);
+    };
+  };
+
 }

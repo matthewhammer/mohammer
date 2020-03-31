@@ -10,18 +10,6 @@ module {
 
   // Flow atts --------------------------------------------------------
 
-  let legendPad : Render.FlowAtts = {
-    dir=#right;
-    interPad=20;
-    intraPad=20;
-  };
-
-  let textHorz : Render.FlowAtts = {
-    dir=#right;
-    interPad=1;
-    intraPad=1;
-  };
-
   let horz : Render.FlowAtts = {
     dir=#right;
     interPad=1;
@@ -30,6 +18,12 @@ module {
 
   let vert : Render.FlowAtts = {
     dir=#down;
+    interPad=1;
+    intraPad=1;
+  };
+
+  let textHorz : Render.FlowAtts = {
+    dir=#right;
     interPad=1;
     intraPad=1;
   };
@@ -56,20 +50,24 @@ module {
     }
   };
 
-  func taLegendText() : Render.TextAtts =
-    taLegend(#closed((200, 200, 200)));
+  func taLegendTextLo() : Render.TextAtts =
+    taLegend(#closed((180, 140, 190)));
+  
+  func taLegendTextHi() : Render.TextAtts =
+    taLegend(#closed((220, 200, 240)));
 
   func taTitleText() : Render.TextAtts =
-    taLegend(#closed((255, 200, 255)));
+    taLegend(#closed((240, 200, 255)));
 
   // Fill names --------------------------------------------------------
 
   func bgFill() : Render.Fill = #closed((50, 10, 50));
+  func bgFillHi() : Render.Fill = #closed((150, 100, 150));
   func taVoid() : TextAtts = tileAtts(#none, #none);
   func taPlayer() : TextAtts = tileAtts(#closed((255, 255, 255)), bgFill());
   func taStart() : TextAtts = tileAtts(#closed((255, 100, 255)), bgFill());
-  func taGoal() : TextAtts = tileAtts(#closed((255, 240, 255)), bgFill());
-  func taWall() : TextAtts = tileAtts(#closed((200, 100, 200)), bgFill());
+  func taGoal() : TextAtts = tileAtts(#closed((255, 255, 255)), bgFillHi());
+  func taWall() : TextAtts = tileAtts(#closed((150, 100, 200)), bgFill());
   func taFloor() : TextAtts = tileAtts(#closed((200, 100, 200)), bgFill());
   func taLock() : TextAtts = tileAtts(#closed((200, 200, 100)), bgFill());
   func taKey() : TextAtts = tileAtts(#closed((255, 255, 100)), bgFill());
@@ -101,44 +99,44 @@ module {
 
     r.begin(#flow(vert));
     r.begin(#flow(horz));
-    r.text("room:", taLegendText());
+    r.text("room:", taLegendTextLo());
     r.end();
     r.begin(#flow(horz));
     r.begin(#flow(vert));
-    r.text(debug_show st.pos.room, taLegendText());
+    r.text(debug_show st.pos.room, taLegendTextHi());
     r.end();
     r.end();
 
     r.begin(#flow(horz));
-    r.text("tile:", taLegendText());
+    r.text("tile:", taLegendTextLo());
     r.end();
     r.begin(#flow(horz));
     r.begin(#flow(vert));
-    r.text("(", taLegendText());
+    r.text("(", taLegendTextLo());
     r.end();
     r.begin(#flow(vert));
-    r.text(debug_show st.pos.tile.1, taLegendText());
+    r.text(debug_show st.pos.tile.1, taLegendTextHi());
     r.end();
     r.begin(#flow(vert));
-    r.text(",", taLegendText());
+    r.text(",", taLegendTextLo());
     r.end();
     r.begin(#flow(vert));
-    r.text(debug_show st.pos.tile.0, taLegendText());
+    r.text(debug_show st.pos.tile.0, taLegendTextHi());
     r.end();
     r.begin(#flow(vert));
-    r.text(")", taLegendText());
+    r.text(")", taLegendTextLo());
     r.end();
     r.end();
 
     r.begin(#flow(vert)); // Keys begin
-    r.text("keys:", taLegendText());
+    r.text("keys:", taLegendTextLo());
     r.end();
     r.begin(#flow(horz));
     switch (st.keys) {
-      case null { r.text("none", taLegendText()) };
+      case null { r.text("none", taLegendTextHi()) };
       case (?_) {
-             List.iter<Types.Id>(st.keys,
-               func (_:Types.Id) {
+             List.iter<()>(st.keys,
+               func (_:()) {
                  r.begin(#flow(vert));
                  r.text("ķ", taLegend(#closed((255, 255, 100))));
                  r.end();
@@ -168,8 +166,8 @@ module {
           case (#wall) { r.text("█", taWall()) };
           case (#lock(_)) { r.text("ļ", taLock()) };
           case (#key(_)) { r.text("ķ", taKey()) };
-          case (#inward(_)) { r.text("i", taWall()) };
-          case (#outward(_)) { r.text("o", taWall()) };
+          case (#inward(_)) { r.text("◊", taWall()) };
+          case (#outward(_)) { r.text("⇲", taWall()) };
           };
         };
         r.end();

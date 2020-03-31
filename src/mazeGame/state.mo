@@ -1,5 +1,5 @@
-import List "mo:stdlib/list";
 import Result "mo:stdlib/result";
+import List "mo:stdlib/list";
 import Render "../render/render";
 import Types "types";
 
@@ -92,15 +92,14 @@ module {
              st.pos := movePos(st.pos, dir);
              #ok(())
            };
-      case (?#outward(_)) {
-             st.pos := movePos(st.pos, dir);
+      case (?#outward(newPos)) {
+             // teleport!
+             st.pos := newPos;
              #ok(())
            };
       case (?#inward(_)) {
              st.pos := movePos(st.pos, dir);
              #ok(())
-             // to do -- search for matching outward portal, 
-             // ...and teleport!
            };
     }
   };
@@ -134,46 +133,72 @@ module {
     let g = #goal;
     let f = #floor;
     let w = #wall;
-    let l = #lock(#nat(0));
-    let k = #key(#nat(0));
-    let i = #inward(#nat(1));
-    let o = #outward(#nat(1));
+    let l = #lock;
+    let k = #key;
+    let i = #inward;
 
     let startPos = { room = 0;
-                     tile = (1, 0) };
+                     tile = (1, 1) };
+    
+    let p1 : Tile = #outward{room=1;tile=(4, 1)};
+    let room0Tiles : [[ var Tile ]] = [
+      [ var x, w, x, x, x ],
+      [ var w, s, w, w, x ],
+      [ var w, f, f, p1,w ],
+      [ var x, w, k, w, x ],
+      [ var x, x, w, x, x ],
+    ];
 
-    // compiler issue?: cannot inline this let binding; why?
-    let _tiles : [[ var Tile ]] = [
-      [ var w, s, w, x,  x, x, x, x,  w, w, w, w ],
-      [ var w, k, w, x,  x, x, w, x,  w, l, l, g ],
+    let p2 : Tile = #outward{room=2;tile=(1, 1)};
+    let p0 : Tile = #outward{room=0;tile=(1, 1)};
+    let room1Tiles : [[ var Tile ]] = [
+      [ var x, x, w, w, w, w ],
+      [ var w, w, f, l, i, w ],
+      [ var w, k, f, w, f, w ],
+      [ var w, k, f, w, f, w ],
+      [ var w, p2,f, w, f, w ],
+      [ var w, w, w, w, p0,w ],
+      [ var x, x, x, x, w, x ],
+    ];
+
+    let room2Tiles : [[ var Tile ]] = [
+      [ var x, w, w, w,  x, x, x, x,  x, x, x, x ],
+      [ var w, i, f, p0, w, x, x, x,  x, w, w, w ],
+      [ var w, f, w, w,  x, x, w, x,  w, l, l, g ],
       [ var w, l, w, x,  x, w, f, w,  w, l, w, w ],
       [ var w, k, w, x,  x, w, f, f,  f, l, f, w ],
-
       [ var w, k, w, x,  w, w, l, w,  f, f, f, w ],
-      [ var w, l, w, x,  w, l, f, w,  w, w, f, w ],
+      [ var w, l, w, x,  w, l, f, w,  w, f, f, w ],
       [ var w, l, w, x,  w, l, l, w,  x, w, f, w ],
-      [ var w, f, w, w,  w, l, f, w,  x, w, f, w ],
-      
+      [ var w, l, w, w,  w, l, f, w,  x, w, f, w ],      
       [ var w, f, f, f,  l, f, f, w,  w, f, f, w ],
       [ var w, f, w, w,  w, w, f, w,  k, k, f, w ],
       [ var w, f, k, w,  k, k, f, w,  k, k, f, w ],
-      [ var w, w, w, w,  w, w, w, w,  w, w, w, x ],            
+      [ var x, w, w, w,  w, w, w, x,  w, w, w, x ],            
     ];
     { 
-      var keys = List.nil<Types.Id>();
+      var keys = List.nil<()>();
       var won = false;
       var pos = startPos;
       var maze : Types.Maze = 
         {
           start = startPos;
-          goal = { room = 0;
-                   tile = (6, 6); };
           rooms = [
             {
+              width=5;
+              height=5;
+              tiles=room0Tiles;
+            },
+            {
+              width=6;
+              height=7;
+              tiles=room1Tiles;
+            },
+            {
               width=12;
-              height=12;
-              tiles=_tiles;
-            }                 
+              height=13;
+              tiles=room2Tiles;
+            }   
           ];
         }
     }

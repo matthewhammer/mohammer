@@ -3,6 +3,9 @@
         "intro": {
             "main": "src/intro/main.mo"
         },
+        "scratch": {
+            "main": "src/intro/scratch.mo"
+        },
         "arrNat": {
             "main": "src/arrNat/main.mo"
         },

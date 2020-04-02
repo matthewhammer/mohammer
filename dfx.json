@@ -3,6 +3,9 @@
         "intro": {
             "main": "src/intro/main.mo"
         },
+        "render": {
+            "main": "src/render/test.mo"
+        },
         "scratch": {
             "main": "src/intro/scratch.mo"
         },

@@ -1,12 +1,18 @@
 # Render module
 
-Simple, 2D graphics in Motoko
+Simple, 2D graphics in Motoko.
 
 Use cases:
 
 - Pretty-print diagnostic Canister state using horz/vert boxes of text.
 - Teaching Motoko to college and K12 students.
 - Create graphical demos, for fun!
+
+In progress:
+
+- Simple scriptable animations that are mobile.
+
+
 
 See also: 
 

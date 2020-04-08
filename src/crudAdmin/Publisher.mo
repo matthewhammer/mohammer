@@ -17,10 +17,11 @@ actor Publisher {
     }
   };
 
+  // returns true if the subscriber is new; false if already subscribed.
   public shared(msg) func subscribe(s : PS.Subscriber) : async Bool {
     Debug.print "Publisher.subscribe()";
     let res : Bool = switch subscriber {
-    case null { false };
+    case null { true };
     case (?(id0, _)) { id0 != msg.caller };
     };
     subscriber := ?(msg.caller, s);

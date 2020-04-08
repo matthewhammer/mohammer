@@ -19,6 +19,13 @@ module {
 
     var tree: Tree<X, Y> = (#leaf : Tree<X, Y>);
 
+    // Get non-OO, purely-functional representation:
+    // for drawing, pretty-printing and non-OO contexts
+    // (e.g., async args and results):
+    public func getTree() : Tree<X, Y> {
+      tree
+    };
+
     public func find(x:X) : ?Y =
       findRec(x, tree);
 
@@ -28,12 +35,18 @@ module {
       res
     };
 
-    public func rebal(t:Tree<X, Y>) : Tree<X, Y> {
+    public func remove(x:X) : ?Y {
+      // to do
+      P.xxx()
+    };
+    
+
+    func rebal(t:Tree<X, Y>) : Tree<X, Y> {
       // to do
       t
     };
 
-    public func insertRec(x1:X, y1:Y, t:Tree<X, Y>)
+    func insertRec(x1:X, y1:Y, t:Tree<X, Y>)
       : (?Y, Tree<X, Y>)
     {
       switch t {
@@ -68,13 +81,6 @@ module {
            };
       }
     };
-
-    // Non-OO, purely-functional representation:
-    // for drawing, pretty-printing and non-OO contexts
-    // (e.g., async args and results):
-    public func getTree() : Tree<X, Y> {
-      tree
-    }
   };
 
   public func drawTree<X, Y>(

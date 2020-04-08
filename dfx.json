@@ -23,6 +23,9 @@
         },
         "crudAdmin": {
             "main": "src/crudAdmin/main.mo"
+        },
+        "publisher": {
+            "main": "src/crudAdmin/Publisher.mo"
         }
     },
     "defaults": {

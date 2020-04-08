@@ -25,10 +25,10 @@
             "main": "src/crudAdmin/main.mo"
         },
         "Publisher": {
-            "main": "src/crudAdmin/Publisher.mo"
+            "main": "src/pubsub/Publisher.mo"
         },
         "Subscriber": {
-            "main": "src/crudAdmin/Subscriber.mo"
+            "main": "src/pubsub/Subscriber.mo"
         }
     },
     "defaults": {

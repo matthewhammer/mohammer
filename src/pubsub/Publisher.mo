@@ -1,5 +1,5 @@
 import Debug "mo:stdlib/debug";
-import PS "Pubsub";
+import PS "PubSub";
 
 actor Publisher {
 

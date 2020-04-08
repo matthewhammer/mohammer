@@ -1,21 +1,17 @@
-import Debug "mo:stdlib/debug";
+import PS "Pubsub";
 
 actor Publisher {
-
-  public type Subscriber = actor {
-    notify : () -> ()
-  };
-
-  var subscriber : ?(Principal, Subscriber) = null;
+  
+  var subscriber : ?(Principal, PS.Subscriber) = null;
 
   // use explicit caller arg to record the subscribing actor's ID
-  public shared(msg) func subscribeExplicit(s : Subscriber) : async Bool {
+  public shared(msg) func subscribeExplicit(s : PS.Subscriber) : async Bool {
     let res : Bool = switch subscriber {
     case null { false };
-    case (?(0, _)) {
+    case (?(id0, _)) {
            // Caution:
            // Unchecked equality assumed: (s : Text) == msg.caller.
-           i0 == msg.caller
+           id0 == msg.caller
          };
     };
     subscriber := ?(msg.caller, s);
@@ -24,7 +20,7 @@ actor Publisher {
 
   // use implicit caller arg to record the subscribing actor's ID
   public shared(msg) func subscribeImplicit() : async Bool {
-    let s : Subscriber = {
+    let s : PS.Subscriber = {
       // Stuck:
       // (msg.caller : Subscriber)  ---- Not permitted.
       assert false;
@@ -32,9 +28,9 @@ actor Publisher {
     };
     let res : Bool = switch subscriber {
     case null { false };
-    case (?(id0, _)) { i0 == msg.caller };
+    case (?(id0, _)) { id0 == msg.caller };
     };
     subscriber := ?(msg.caller, s);
     res
   };
-};
+}

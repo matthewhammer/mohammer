@@ -23,6 +23,12 @@
         },
         "crudAdmin": {
             "main": "src/crudAdmin/main.mo"
+        },
+        "Publisher": {
+            "main": "src/crudAdmin/Publisher.mo"
+        },
+        "Subscriber": {
+            "main": "src/crudAdmin/Subscriber.mo"
         }
     },
     "defaults": {

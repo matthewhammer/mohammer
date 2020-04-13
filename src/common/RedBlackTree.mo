@@ -2,7 +2,7 @@ import P "mo:stdlib/prelude";
 import Render "../render/render";
 
 module {
-  
+
 public type Comp = {
   #lt;
   #eq;
@@ -18,25 +18,25 @@ public type Tree<X, Y> = {
 
 
 public class RBTree<X, Y>(compareTo:(X, X) -> Comp) {
-  
+
   var tree: Tree<X, Y> = (#leaf : Tree<X, Y>);
-  
+
   // Get non-OO, purely-functional representation:
   // for drawing, pretty-printing and non-OO contexts
   // (e.g., async args and results):
   public func getTree() : Tree<X, Y> {
     tree
   };
-  
+
   public func find(x:X) : ?Y =
     findRec(x, compareTo, tree);
-  
+
   public func insert(x:X, y:Y) : ?Y {
     let (res, t) = insertRec(x, compareTo, y, tree);
     tree := t;
     res
   };
-  
+
   public func remove(x:X) : ?Y {
     // to do
     P.xxx()

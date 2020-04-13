@@ -4,8 +4,8 @@ import RBT "../common/RedBlackTree";
 import Nat "mo:stdlib/nat";
 
 actor {
-      
-  func compareNats(x:Nat, y:Nat) : RBT.Comp = 
+
+  func compareNats(x:Nat, y:Nat) : RBT.Comp =
     if (x < y) #lt else if (y > x) #gt else #eq;
 
   var t = RBT.RBTree<Nat, Text>(compareNats);
@@ -36,5 +36,5 @@ actor {
       )
     )
   };
-  
+
 };

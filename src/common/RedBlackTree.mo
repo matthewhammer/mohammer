@@ -39,7 +39,7 @@ module {
       // to do
       P.xxx()
     };
-    
+
 
     func rebal(t:Tree<X, Y>) : Tree<X, Y> {
       // to do
@@ -83,12 +83,75 @@ module {
     };
   };
 
+  // ----------- Drawing
+
+  func renderColor(c:Color) : Render.Color = {
+    switch c {
+    case (#R) { (255, 100, 100) };
+    case (#B) { (255, 255, 255) };
+    }
+  };
+
+  func textAtts(c:Color) : Render.TextAtts = {
+    zoom=1;
+    fgFill=#closed(renderColor(c));
+    bgFill=#closed((0,0,0));
+    glyphDim={width=5; height=5};
+    glyphFlow={
+      dir=#right;
+      intraPad=1;
+      interPad=2
+    };
+  };
+
+  // "child vs parent" as "down vs "up":
+  func parentChildFlow() : Render.FlowAtts =
+    {
+      dir=#down;
+      intraPad=2;
+      interPad=2;
+    };
+
+  // "sibling-1 vs sibling-2" as "left vs right":
+  func siblingSiblingFlow() : Render.FlowAtts =
+    {
+      dir=#right;
+      intraPad=2;
+      interPad=2;
+    };
+
+  func drawTreeRec<X, Y>(
+    r: Render.Render,
+    tree: Tree<X, Y>,
+    drawXY: (X, Y) -> Render.Elm,
+  ) {
+    r.beginFlow(parentChildFlow());
+    switch tree {
+    case (#node (c, x, y, lc, rc)) {
+           r.elm(drawXY(x, y));
+           r.beginFlow(siblingSiblingFlow());
+           // to do: Understand why we cannot currently infer these:
+           drawTreeRec<X, Y>(r, lc, drawXY);
+           drawTreeRec<X, Y>(r, rc, drawXY);
+           r.end();
+         };
+    case (#leaf) {
+           r.begin(#none);
+           r.text("*", textAtts(#B));
+           r.end();
+         };
+    };
+    r.end()
+  };
+
   public func drawTree<X, Y>(
     tree: Tree<X, Y>,
-    drawX: X -> Render.Elm,
-    drawY: Y -> Render.Elm,
+    drawXY: (X, Y) -> Render.Elm,
   ) : Render.Elm
   {
-    P.xxx()
+    let r = Render.Render();
+    drawTreeRec(r, tree, drawXY);
+    r.getElm()
   };
+
 }

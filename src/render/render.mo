@@ -174,6 +174,10 @@ module {
 
     var stack = Stack.Stack<Frame>();
 
+    public func beginFlow(flow:FlowAtts) {
+      begin(#flow(flow))
+    };
+
     public func begin(typ_:FrameType) {
       let new_frame : Frame = {
         var fill=(#none : Fill);

@@ -15,8 +15,13 @@ actor {
     t.insert(x, y)
   };
 
-  func drawLabel(x:Nat, y:Text) : Render.Elm {
-    let ta = RBT.Draw.textAtts(#B);
+  public func remove(x:Nat) : async ?Text {
+    t.remove(x)
+  };
+
+  func drawLabel(x:Nat, y:?Text) : Render.Elm {
+    let ta = RBT.Draw.textAttsLabel(#B);
+    let taNull = RBT.Draw.textAttsNull();
     let flowAtts = {
       dir=#right;
       intraPad=2;
@@ -27,11 +32,18 @@ actor {
     r.text("(", ta);
     r.text(Nat.toText(x), ta);
     r.text(",", ta);
-    r.text(y, ta);
+    switch y {
+    case null { r.text("null", taNull); };
+    case (?y) { r.text(y, ta); };
+    };
     r.text(")", ta);
     r.end();
     let elm = r.getElm();
     elm
+  };
+
+  public func test() : async () {
+    RBT.Test.run();
   };
 
   public func enneagram() : async {#ok:Render.Out} {
@@ -61,10 +73,25 @@ actor {
         (7, "enthusiast"),
       ];
 
+    var t2 = RBT.RBTree<Nat, Text>(compareNats);
+
     for ((num, lab) in sorted.vals()) {
       Debug.print (Nat.toText num);
       Debug.print lab;
       ignore t.insert(num, lab);
+      ignore t2.insert(num, lab);
+    };
+
+    Debug.print "## sorted order:";
+    for ((num, lab) in t2.iter()) {
+      Debug.print (Nat.toText num);
+      Debug.print lab;
+    };
+
+    Debug.print "## reverse order:";
+    for ((num, lab) in t2.rev()) {
+      Debug.print (Nat.toText num);
+      Debug.print lab;
     };
 
     #ok(

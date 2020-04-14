@@ -2,11 +2,12 @@ import Array "mo:stdlib/array";
 import Render "../render/render";
 import RBT "../common/RedBlackTree";
 import Nat "mo:stdlib/nat";
+import Debug "mo:stdlib/debug";
 
 actor {
 
   func compareNats(x:Nat, y:Nat) : RBT.Comp =
-    if (x < y) #lt else if (y > x) #gt else #eq;
+    if (x < y) #lt else if (x > y) #gt else #eq;
 
   var t = RBT.RBTree<Nat, Text>(compareNats);
 
@@ -14,24 +15,61 @@ actor {
     t.insert(x, y)
   };
 
-  public query func redrawTree() : async {#ok:Render.Out} {
+  func drawLabel(x:Nat, y:Text) : Render.Elm {
     let ta = RBT.Draw.textAtts(#B);
-    func drawNatText(x:Nat, y:Text) : Render.Elm {
-      let r = Render.Render();
-      r.beginFlow({dir=#right;
-                   intraPad=2;
-                   interPad=1});
-      r.text(Nat.toText(x), ta);
-      r.text(":", ta);
-      r.text(y, ta);
-      r.end();
-      r.getElm()
+    let flowAtts = {
+      dir=#right;
+      intraPad=2;
+      interPad=1
     };
+    let r = Render.Render();
+    r.beginFlow(flowAtts);
+    r.text("(", ta);
+    r.text(Nat.toText(x), ta);
+    r.text(",", ta);
+    r.text(y, ta);
+    r.text(")", ta);
+    r.end();
+    let elm = r.getElm();
+    elm
+  };
+
+  public func enneagram() : async {#ok:Render.Out} {
+    let numLabs =
+      [
+        (6, "loyalist"),
+        (3, "achiever"),
+        (9, "peacemaker"),
+        (1, "reformer"),
+        (4, "individualist"),
+        (2, "helper"),
+        (8, "challenger"),
+        (5, "investigator"),
+        (7, "enthusiast"),
+      ];
+
+    for ((num, lab) in numLabs.vals()) {
+      Debug.print (Nat.toText num);
+      Debug.print lab;
+      ignore t.insert(num, lab);
+    };
+
     #ok(
       #redraw(
         [
           ("tree",
-           RBT.Draw.drawTree(t.getTree(), drawNatText))
+           RBT.Draw.drawTree(t.getTree(), drawLabel))
+        ]
+      )
+    )
+  };
+
+  public query func redrawTree() : async {#ok:Render.Out} {
+    #ok(
+      #redraw(
+        [
+          ("tree",
+           RBT.Draw.drawTree(t.getTree(), drawLabel))
         ]
       )
     )

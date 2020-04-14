@@ -1,4 +1,5 @@
 import P "mo:stdlib/prelude";
+import ExtNat "Nat";
 import Render "../render/render";
 
 module {
@@ -12,7 +13,7 @@ public type Comp = {
 public type Color = {#R; #B};
 
 public type Tree<X, Y> = {
-  #node : (Color, X, Y, Tree<X, Y>, Tree<X, Y>);
+  #node : (Color, Tree<X, Y>, (X, Y), Tree<X, Y>);
   #leaf;
 };
 
@@ -38,55 +39,102 @@ public class RBTree<X, Y>(compareTo:(X, X) -> Comp) {
   };
 
   public func remove(x:X) : ?Y {
-    // to do
+    // to do: Requires a more complex (persistent) representation,
+    //        with double-red, double-black cases.
     P.xxx()
   };
 };
 
 
+/*
+Triggers compiler Error:
+  Fatal error: exception "Assert_failure mo_frontend/coverage.ml:300:4"
 
-func rebal<X, Y>(t:Tree<X, Y>) : Tree<X, Y> {
-  // to do
-  t
+public func height<X, Y>(t:Tree<X, Y>) : Nat {
+  switch t {
+    case (#leaf) 0;
+    case (#node(_, _, l, r)) {
+           ExtNat.max(height(l), height(r))
+         }
+  }
+};
+*/
+
+
+/*
+Triggers compiler error:
+  Fatal error: exception "Assert_failure mo_frontend/coverage.ml:300:4"
+
+public func size<X, Y>(t:Tree<X, Y>) : Nat {
+  switch t {
+    case (#leaf) 0;
+    case (#node(_, _, l, r)) {
+           size(l) + size(r)
+         };
+  }
+};
+*/
+
+/*
+ To do: Check invariants for tests:
+
+ isRedBlack =def=
+
+ binarySearchOrder( )
+ and
+ noRedRed( )
+ and
+ okBlackHeight( )
+*/
+
+
+func bal<X, Y>(color:Color, lt:Tree<X, Y>, kv:(X, Y), rt:Tree<X, Y>) : Tree<X, Y> {
+  switch (color, lt, kv, rt) {
+  case (#B, #node(#R, #node(#R, a, x, b), y, c), z, d) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
+  case (#B, #node(#R, a, x, #node(#R, b, y, c)), z, d) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
+  case (#B, a, x, #node(#R, #node(#R, b, y, c), z, d)) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
+  case (#B, a, x, #node(#R, b, y, #node(#R, c, z, d))) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
+  case _ { #node(color, lt, kv, rt) };
+  }
 };
 
-func insertRec<X, Y>(x1:X, compareTo:(X, X) -> Comp, y1:Y, t:Tree<X, Y>)
+func insertRec<X, Y>(x:X, compareTo:(X, X) -> Comp, y:Y, t:Tree<X, Y>)
   : (?Y, Tree<X, Y>)
 {
   switch t {
-  case (#leaf) { (null, #leaf) };
-  case (#node(c, x2, y2, l, r)) {
-         switch (compareTo(x1, x2)) {
+  case (#leaf) { (null, #node(#R, #leaf, (x, y), #leaf)) };
+  case (#node(c, l, xy, r)) {
+         switch (compareTo(x, xy.0)) {
          case (#lt) {
-                let (yo, l2) = insertRec(x1, compareTo, y1, l);
-                (yo, rebal(#node(c, x2, y2, l2, r)))
+                let (yo, l2) = insertRec(x, compareTo, y, l);
+                (yo, bal(c, l2, xy, r))
               };
          case (#eq) {
-                (?y2, #node(c, x1, y1, l, r))
+                (?xy.1, #node(c, l, (x, y), r))
               };
          case (#gt) {
-                let (yo, r2) = insertRec(x1, compareTo, y1, r);
-                (yo, rebal(#node(c, x2, y2, l, r2)))
+                let (yo, r2) = insertRec(x, compareTo, y, r);
+                (yo, bal(c, l, xy, r2))
               };
          }
        }
   }
 };
 
-func findRec<X, Y>(x1:X, compareTo:(X, X) -> Comp, t:Tree<X, Y>) : ?Y {
+func findRec<X, Y>(x:X, compareTo:(X, X) -> Comp, t:Tree<X, Y>) : ?Y {
   switch t {
   case (#leaf) { null };
-  case (#node(c, x2, y, l, r)) {
-         switch (compareTo(x1, x2)) {
-         case (#lt) { findRec(x1, compareTo, l) };
-         case (#eq) { ?y };
-         case (#gt) { findRec(x1, compareTo, r) };
+  case (#node(c, l, xy, r)) {
+         switch (compareTo(x, xy.0)) {
+         case (#lt) { findRec(x, compareTo, l) };
+         case (#eq) { ?xy.1 };
+         case (#gt) { findRec(x, compareTo, r) };
          }
        };
   }
 };
 
-// ----------- Drawing
+
 public module Draw {
 
 public func renderColor(c:Color) : Render.Color = {
@@ -97,7 +145,7 @@ public func renderColor(c:Color) : Render.Color = {
 };
 
 public func textAtts(c:Color) : Render.TextAtts = {
-  zoom=1;
+  zoom=2;
   fgFill=#closed(renderColor(c));
   bgFill=#closed((0,0,0));
   glyphDim={width=5; height=5};
@@ -124,15 +172,27 @@ public func siblingSiblingFlow() : Render.FlowAtts =
     interPad=2;
   };
 
+// key-vs-value flow
+public func labelFlow() : Render.FlowAtts =
+  {
+    dir=#right;
+    intraPad=2;
+    interPad=2;
+  };
+
 func drawTreeRec<X, Y>(
   r: Render.Render,
   tree: Tree<X, Y>,
   drawXY: (X, Y) -> Render.Elm,
 ) {
   r.beginFlow(parentChildFlow());
+  r.fill(#open((100, 0, 100), 1));
   switch tree {
-  case (#node (c, x, y, lc, rc)) {
+  case (#node (c, lc, (x, y), rc)) {
+         r.beginFlow(labelFlow());
+         r.fill(#open(renderColor(c), 1));
          r.elm(drawXY(x, y));
+         r.end();
          r.beginFlow(siblingSiblingFlow());
          // to do: Understand why we cannot currently infer these:
          drawTreeRec<X, Y>(r, lc, drawXY);

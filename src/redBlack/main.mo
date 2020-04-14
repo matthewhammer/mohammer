@@ -35,7 +35,20 @@ actor {
   };
 
   public func enneagram() : async {#ok:Render.Out} {
-    let numLabs =
+    let sorted =
+      [
+        (1, "reformer"),
+        (2, "helper"),
+        (3, "achiever"),
+        (4, "individualist"),
+        (5, "investigator"),
+        (6, "loyalist"),
+        (7, "enthusiast"),
+        (8, "challenger"),
+        (9, "peacemaker"),
+      ];
+
+    let unsort =
       [
         (6, "loyalist"),
         (3, "achiever"),
@@ -48,7 +61,7 @@ actor {
         (7, "enthusiast"),
       ];
 
-    for ((num, lab) in numLabs.vals()) {
+    for ((num, lab) in sorted.vals()) {
       Debug.print (Nat.toText num);
       Debug.print lab;
       ignore t.insert(num, lab);

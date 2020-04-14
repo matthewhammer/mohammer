@@ -33,7 +33,7 @@ public class RBTree<X, Y>(compareTo:(X, X) -> Comp) {
     findRec(x, compareTo, tree);
 
   public func insert(x:X, y:Y) : ?Y {
-    let (res, t) = insertRec(x, compareTo, y, tree);
+    let (res, t) = insertRoot(x, compareTo, y, tree);
     tree := t;
     res
   };
@@ -95,6 +95,15 @@ func bal<X, Y>(color:Color, lt:Tree<X, Y>, kv:(X, Y), rt:Tree<X, Y>) : Tree<X, Y
   case (#B, a, x, #node(#R, #node(#R, b, y, c), z, d)) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
   case (#B, a, x, #node(#R, b, y, #node(#R, c, z, d))) #node(#R, #node(#B, a, x, b), y, #node(#B, c, z, d));
   case _ { #node(color, lt, kv, rt) };
+  }
+};
+
+func insertRoot<X, Y>(x:X, compareTo:(X, X) -> Comp, y:Y, t:Tree<X, Y>)
+  : (?Y, Tree<X, Y>)
+{
+  switch (insertRec(x, compareTo, y, t)) {
+  case (_, #leaf) { assert false; loop { } };
+  case (yo, #node(_, l, xy, r)) { (yo, #node(#B, l, xy, r)) };
   }
 };
 

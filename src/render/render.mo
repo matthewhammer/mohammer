@@ -1,6 +1,7 @@
 // 2D rendering abstractions
+import Nat "mo:stdlib/nat";
 import Buf "mo:stdlib/buf";
-import Debug "mo:stdlib/debug";
+import Debug "../common/DebugOff";
 import List "mo:stdlib/list";
 import P "mo:stdlib/prelude";
 import I "mo:stdlib/iter";
@@ -114,6 +115,7 @@ module {
   };
 
   public func checkNodeValid(node:Node) : Bool {
+    Debug.print "checkNodeValid";
     let rect = boundingRectOfElms(node.elms);
     if (rectContains(node.rect, rect)) {
       true
@@ -126,16 +128,21 @@ module {
   };
 
   public func checkElmsValid(elms:Elms) : Bool {
+    Debug.print "checkElmsValid begin";
     if (elms.len() == 0) {
       return true
     };
     for (i in I.range(0, elms.len() - 1)) {
+      Debug.print "checkElmsValid for1-body begin";
+      Debug.print (Nat.toText i);
       let elm = elms[i];
       if (not checkElmValid(elm)) {
         return false
       };
       if (i + 1 < elms.len() - 1) {
         for (j in I.range(i + 1, elms.len() - 1)) {
+          Debug.print "checkElmsValid for2-body begin";
+          Debug.print (Nat.toText j);
           let elm2 = elms[j];
           if (not checkElmsApart(elm, elm2)) {
             return false
@@ -143,6 +150,7 @@ module {
         };
       };
     };
+    Debug.print "checkElmsValid done";
     true
   };
 
@@ -179,6 +187,10 @@ module {
 
     var stack = Stack.Stack<Frame>();
 
+    public func beginFlow(flow:FlowAtts) {
+      begin(#flow(flow))
+    };
+
     public func begin(typ_:FrameType) {
       let new_frame : Frame = {
         var fill=(#none : Fill);
@@ -207,11 +219,22 @@ module {
       frame.elms.add(#rect(r, f))
     };
 
+    func text_(t:Text, ta:TextAtts) {
+      Debug.print "text begin";
+      Debug.print t;
+      frame.elms.add(#text(t, ta));
+      Debug.print "text end";
+    };
+
     public func text(t:Text, ta:TextAtts) {
-      frame.elms.add(#text(t, ta))
+      // to do; fix and clean up:
+      begin(#flow({dir=#right; intraPad=0; interPad=0}));
+      text_(t, ta);
+      end();
     };
 
     public func end() {
+      Debug.print "end";
       switch (stack.pop()) {
       case null { P.unreachable() };
       case (?frame_1) {
@@ -226,6 +249,7 @@ module {
     };
 
     public func getElms() : Elms {
+      Debug.print "getElms";
       assert(stack.isEmpty());
       let elms = frame.elms.toArray();
       assert(checkElmsValid(elms));
@@ -233,6 +257,7 @@ module {
     };
 
     public func getElm() : Elm {
+      Debug.print "getElm";
       let elms = getElms();
       assert(elms.len() == 1);
       elms[0]
@@ -340,6 +365,7 @@ module {
   };
 
   func boundingRectOfElm(elm:Elm) : Rect {
+    Debug.print "boundingRectOfElm";
     switch elm {
       case (#text(t,ta)) { boundingRectOfText(t, ta) };
       case (#node(node)) { node.rect };
@@ -348,6 +374,7 @@ module {
   };
 
   func boundingRectOfElms(elms:Elms) : Rect {
+    Debug.print "boundingRectOfElms";
     let max_dim = 999999; // to do
     var min_x = max_dim;
     var min_y = max_dim;
@@ -395,6 +422,7 @@ module {
   };
 
   func repositionFrameElms(frame: Frame) : (Elms, Rect) {
+    Debug.print "repositionFrameElms";
     let frameDim = dimOfFrame(frame);
     var elmsOut = Buf.Buf<Elm>(0);
     var posOut = {x=0; y=0};
@@ -443,7 +471,9 @@ module {
   };
 
   func elmOfFrame(frame:Frame) : Elm {
+    Debug.print "elmOfFrame begin";
     let (elms_, rect_) = repositionFrameElms(frame);
+    Debug.print "elmOfFrame done";
     #node{ rect= rect_;
            fill= frame.fill;
            elms= elms_;

@@ -72,7 +72,7 @@ actor {
    (e.g., https://jupyter.org/), or the basic outlines of one.
 
  - `eval` function uses caller ID to save
-   per-caller resources (envgironments and adapton contexts).
+   per-caller resources (environments and adapton contexts).
 
  - more complete formula features, and more end-to-end tests...
 

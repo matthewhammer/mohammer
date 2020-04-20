@@ -64,6 +64,15 @@ actor {
     #ok(#redraw([("dcg", r.getElm())]))
   };
 
+  public func drawLast() : async Draw.Result {
+    let r = Draw.begin();
+    switch (A.getLogEventLast(adaptonCtx)) {
+      case null { };
+      case (?ev) { Draw.logEvent(r, ev) };
+    };
+    #ok(#redraw([("last", r.getElm())]))
+  };
+
 }
 
 /* To do in the future:

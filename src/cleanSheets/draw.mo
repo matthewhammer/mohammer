@@ -17,5 +17,8 @@ module {
     // to do
   };
 
+  public func logEvent(r:Render.Render, ev:T.Adapton.LogEvent) {
+    // to do
+  };
 
 }

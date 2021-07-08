@@ -1,6 +1,7 @@
 import T "types";
 import A "adapton";
 import E "eval";
+import Draw "draw";
 
 // the `E` part of a Cloud-backed `REPL` for the CleanSheets lang.
 
@@ -51,6 +52,26 @@ actor {
   };
 
 
+  public func drawEnv() : async Draw.Result {
+    let r = Draw.begin();
+    Draw.env(r, env);
+    #ok(#redraw([("env", r.getElm())]))
+  };
+
+  public func drawGraph() : async Draw.Result {
+    let r = Draw.begin();
+    Draw.graph(r, adaptonCtx);
+    #ok(#redraw([("dcg", r.getElm())]))
+  };
+
+  public func drawLast() : async Draw.Result {
+    let r = Draw.begin();
+    switch (A.getLogEventLast(adaptonCtx)) {
+      case null { };
+      case (?ev) { Draw.logEvent(r, ev) };
+    };
+    #ok(#redraw([("last", r.getElm())]))
+  };
 
 }
 

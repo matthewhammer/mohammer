@@ -39,7 +39,12 @@ module {
     #draw:Elm;
     #redraw:[(Text, Elm)];
   };
-  
+
+  public type Result = {
+    #ok: Out;
+    #err: Out;
+  };
+
   public type TextAtts = {
     zoom: Nat;
     fgFill: Fill;
@@ -270,14 +275,14 @@ module {
 
   func dimOfText(t:Text, ta:TextAtts) : Dim {
     var w = 0;
-    var h = 0;             
+    var h = 0;
     if (t.len() > 0) {
       switch (ta.glyphFlow.dir) {
-      case (#right or #left) { 
+      case (#right or #left) {
              w := ta.glyphFlow.interPad * 2;
              h := ta.glyphFlow.interPad * 2 + ta.glyphDim.height * ta.zoom;
            };
-      case (#up or #down) { 
+      case (#up or #down) {
              w := ta.glyphFlow.interPad * 2 + ta.glyphDim.width * ta.zoom;
              h := ta.glyphFlow.interPad * 2;
            };
@@ -286,17 +291,17 @@ module {
     var first = true;
     for (c in t.chars()) {
       switch (ta.glyphFlow.dir) {
-      case (#right or #left) { 
-             w += ta.glyphDim.width * ta.zoom; 
-             if (not first) { 
+      case (#right or #left) {
+             w += ta.glyphDim.width * ta.zoom;
+             if (not first) {
                w += ta.glyphFlow.intraPad
              }
            };
-      case (#down or #up) { 
+      case (#down or #up) {
              w += ta.glyphDim.height * ta.zoom;
-             if (not first) { 
+             if (not first) {
                h += ta.glyphFlow.intraPad
-             } 
+             }
            };
       };
       first := false
